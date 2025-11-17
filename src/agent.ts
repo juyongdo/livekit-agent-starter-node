@@ -13,16 +13,30 @@ import * as silero from '@livekit/agents-plugin-silero';
 import { BackgroundVoiceCancellation } from '@livekit/noise-cancellation-node';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
+import * as openai from '@livekit/agents-plugin-openai';
 
 dotenv.config({ path: '.env.local' });
 
 class Assistant extends voice.Agent {
   constructor() {
     super({
-      instructions: `You are a helpful voice AI assistant. The user is interacting with you via voice, even if you perceive the conversation as text.
-      You eagerly assist users with their questions by providing information from your extensive knowledge.
-      Your responses are concise, to the point, and without any complex formatting or punctuation including emojis, asterisks, or other symbols.
-      You are curious, friendly, and have a sense of humor.`,
+      // instructions: `You are a helpful voice AI assistant. The user is interacting with you via voice, even if you perceive the conversation as text.
+      // You eagerly assist users with their questions by providing information from your extensive knowledge.
+      // Your responses are concise, to the point, and without any complex formatting or punctuation including emojis, asterisks, or other symbols.
+      // You are curious, friendly, and have a sense of humor.`,
+      instructions: `
+      You are a gentle and attentive interviewer helping people recall their life stories. 
+      The user may be of any age, including elderly speakers, so speak clearly, kindly, and at a relaxed pace.
+      Your main goal is to make the user feel comfortable sharing memories and emotions.
+      Ask one question at a time, then listen quietly for their full response. 
+      Do not interrupt or speak over them, even if there are pauses.
+      Wait until the user clearly finishes before replying.
+      Keep your tone warm, friendly, and conversational—like a caring family member or documentary interviewer.
+      When you respond, keep sentences short and natural. Avoid sounding robotic or overly formal.
+      Never rush the user or fill silences; be patient and supportive.
+      `,
+      //[Optional] a bit too slow and unnaturally kind. :( revisit later
+      // Speak in a calm, caring tone, as if talking with a friend or grandparent.
 
       // To add tools, specify `tools` in the constructor.
       // Here's an example that adds a simple weather tool.
@@ -53,33 +67,33 @@ export default defineAgent({
     proc.userData.vad = await silero.VAD.load();
   },
   entry: async (ctx: JobContext) => {
-    // Set up a voice AI pipeline using OpenAI, Cartesia, AssemblyAI, and the LiveKit turn detector
-    const session = new voice.AgentSession({
-      // Speech-to-text (STT) is your agent's ears, turning the user's speech into text that the LLM can understand
-      // See all available models at https://docs.livekit.io/agents/models/stt/
-      stt: new inference.STT({
-        model: 'assemblyai/universal-streaming',
-        language: 'en',
-      }),
+    // // Set up a voice AI pipeline using OpenAI, Cartesia, AssemblyAI, and the LiveKit turn detector
+    // const session = new voice.AgentSession({
+    //   // Speech-to-text (STT) is your agent's ears, turning the user's speech into text that the LLM can understand
+    //   // See all available models at https://docs.livekit.io/agents/models/stt/
+    //   stt: new inference.STT({
+    //     model: 'assemblyai/universal-streaming',
+    //     language: 'en',
+    //   }),
 
-      // A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
-      // See all providers at https://docs.livekit.io/agents/models/llm/
-      llm: new inference.LLM({
-        model: 'openai/gpt-4.1-mini',
-      }),
+    //   // A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
+    //   // See all providers at https://docs.livekit.io/agents/models/llm/
+    //   llm: new inference.LLM({
+    //     model: 'openai/gpt-4.1-mini',
+    //   }),
 
-      // Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
-      // See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
-      tts: new inference.TTS({
-        model: 'cartesia/sonic-3',
-        voice: '9626c31c-bec5-4cca-baa8-f8ba9e84c8bc',
-      }),
+    //   // Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
+    //   // See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
+    //   tts: new inference.TTS({
+    //     model: 'cartesia/sonic-3',
+    //     voice: '9626c31c-bec5-4cca-baa8-f8ba9e84c8bc',
+    //   }),
 
-      // VAD and turn detection are used to determine when the user is speaking and when the agent should respond
-      // See more at https://docs.livekit.io/agents/build/turns
-      turnDetection: new livekit.turnDetector.MultilingualModel(),
-      vad: ctx.proc.userData.vad! as silero.VAD,
-    });
+    //   // VAD and turn detection are used to determine when the user is speaking and when the agent should respond
+    //   // See more at https://docs.livekit.io/agents/build/turns
+    //   turnDetection: new livekit.turnDetector.MultilingualModel(),
+    //   vad: ctx.proc.userData.vad! as silero.VAD,
+    // });
 
     // To use a realtime model instead of a voice pipeline, use the following session setup instead.
     // (Note: This is for the OpenAI Realtime API. For other providers, see https://docs.livekit.io/agents/models/realtime/))
@@ -87,9 +101,9 @@ export default defineAgent({
     // 2. Set OPENAI_API_KEY in .env.local
     // 3. Add import `import * as openai from '@livekit/agents-plugin-openai'` to the top of this file
     // 4. Use the following session setup instead of the version above
-    // const session = new voice.AgentSession({
-    //   llm: new openai.realtime.RealtimeModel({ voice: 'marin' }),
-    // });
+    const session = new voice.AgentSession({
+      llm: new openai.realtime.RealtimeModel({ voice: 'marin' }),
+    });
 
     // Metrics collection, to measure pipeline performance
     // For more information, see https://docs.livekit.io/agents/build/metrics/
@@ -117,6 +131,34 @@ export default defineAgent({
         noiseCancellation: BackgroundVoiceCancellation(),
       },
     });
+
+    // // 👇 Add this listener after the agent has joined the room
+    // ctx.room.on('dataReceived', async (payload, participant) => {
+    //   try {
+    //     const data = JSON.parse(new TextDecoder().decode(payload));
+
+    //     if (data.type === 'context' && data.topic) {
+    //       const topic = data.topic;
+    //       if (participant) console.log(`🧠 Received topic context from ${participant.identity}: ${topic}`);
+
+    //       // 1️⃣ Add it to the session's chat context as a system message
+    //       // session.history.addMessage({
+    //       //   role: 'system',
+    //       //   content: `Context topic: ${topic}`,
+    //       // });
+
+    //       // session.history.addMessage({
+    //       //   role: 'user',
+    //       //   content: `Today, let's focus our conversation on the topic of ${topic}. Please, help me to share my memories around this topic with relevant questions in a casual friendly way.`,
+    //       // });
+
+    //       // // 2️⃣ Optionally, provide audible or textual acknowledgment if you wish
+    //       // session.say(`Hello there. Let's talk about the topic of ${topic}.`);
+    //     }
+    //   } catch (err) {
+    //     console.error('❌ Failed to parse data message:', err);
+    //   }
+    // });
 
     // Join the room and connect to the user
     await ctx.connect();
