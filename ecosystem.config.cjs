@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "livekit-agent",
-      cwd: "/home/ubuntu/livekit/agent",   // ★ ensure correct working dir
+      cwd: "/home/ubuntu/livekit-agent",   // ★ ensure correct working dir
       script: "pnpm",
       args: "run start",
       interpreter: "none",                 // ★ run pnpm directly (correct)
@@ -51,7 +51,7 @@ module.exports = {
 
 ///////////////////////
 // NOTE: How to apply the new config
-// pm2 delete livekit - agent--silent || true     # remove old version if exists
-// pm2 start ecosystem.config.js                 # start with the new config
+// pm2 delete agent --silent || true     # remove old version if exists
+// pm2 start ecosystem.config.cjs                 # start with the new config
 // pm2 save                                      # persist across reboots
 // pm2 startup                                   #(re - run if it asks you to)
