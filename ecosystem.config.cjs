@@ -26,8 +26,8 @@ module.exports = {
       },
 
       // ★ Logging
-      output: "/home/ubuntu/pm2/logs/livekit-agent-out.log",
-      error: "/home/ubuntu/pm2/logs/livekit-agent-error.log"
+      output: "/home/ubuntu/.pm2/logs/livekit-agent-out.log",
+      error: "/home/ubuntu/.pm2/logs/livekit-agent-error.log"
     }
   ]
 };
