@@ -102,7 +102,7 @@ export default defineAgent({
     // 3. Add import `import * as openai from '@livekit/agents-plugin-openai'` to the top of this file
     // 4. Use the following session setup instead of the version above
     const session = new voice.AgentSession({
-      llm: new openai.realtime.RealtimeModel({ voice: 'marin' }),
+      llm: new openai.realtime.RealtimeModel({ model: "gpt-realtime", voice: 'marin' }),
     });
 
     // Metrics collection, to measure pipeline performance
