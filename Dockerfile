@@ -44,19 +44,31 @@ ARG UID=10001
 RUN adduser \
     --disabled-password \
     --gecos "" \
-    --home "/app" \
+    --home "/home/appuser" \
     --shell "/sbin/nologin" \
     --uid "${UID}" \
     appuser
 
-# Set proper permissions
-RUN chown -R appuser:appuser /app
+# Ensure permissions are correct across both directories
+RUN mkdir -p /home/appuser && chown -R appuser:appuser /app /home/appuser
 USER appuser
 
 # Pre-download any ML models or files the agent needs
 # This ensures the container is ready to run immediately without downloading
 # dependencies at runtime, which improves startup time and reliability
 RUN pnpm download-files
+
+# ==========================================
+#  STAGE 1: Development (Preserves devDependencies)
+# ==========================================
+FROM base AS development
+ENV NODE_ENV=development
+CMD [ "pnpm", "run", "dev" ]
+
+# ==========================================
+#  STAGE 2: Production (Pruned and Secure)
+# ==========================================
+FROM base AS production
 
 # Switch back to root to remove dev dependencies and finalize setup
 USER root

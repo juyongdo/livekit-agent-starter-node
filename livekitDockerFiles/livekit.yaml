@@ -1,0 +1,24 @@
+port: 7880
+
+rtc:
+  tcp_port: 7881
+  udp_port: 7882
+  use_external_ip: false # Set to true ONLY in production cloud VMs
+  port_range_start: 50000
+  port_range_end: 50100
+
+redis:
+  # address: localhost:6379
+  address: redis:6379
+
+turn:
+  enabled: true
+  udp_port: 3478  
+
+keys:
+  devkey: secret
+
+logging:
+  level: info
+
+development: true
